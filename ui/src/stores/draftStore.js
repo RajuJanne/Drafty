@@ -57,6 +57,22 @@ export const useDraftStore = defineStore("draft", {
       }
     },
 
+    async fetchSession(id) {
+      this.loading = true
+      try {
+        const response = await fetch(`http://localhost:8080/api/draft/${id}`)
+        if (!response.ok) throw new Error("Session not found")
+        const data = await response.json()
+        this.series = data
+        this.sessionId = data.id
+        return data
+      } catch (error) {
+        console.error("Fetch session error:", error)
+      } finally {
+        this.loading = false
+      }
+    },
+
     async beginDraft() {
       await this.startNewSeries(this.teamNames.BLUE, this.teamNames.RED)
       this.isSetupComplete = true
@@ -73,6 +89,7 @@ export const useDraftStore = defineStore("draft", {
         const data = await response.json()
         this.series = data
         this.sessionId = data.id
+        return data
       } catch (error) {
         console.error("Start series error:", error)
       }

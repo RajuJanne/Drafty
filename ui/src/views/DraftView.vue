@@ -110,8 +110,9 @@ const handleChampionClick = (champ) => {
 
 onMounted(async () => {
   await store.fetchChampions();
-  if (route.params.id) {
-    await store.fetchSession(route.params.id);
+  const sessionId = route.params.id;
+  if (sessionId) {
+    await store.fetchSession(sessionId);
   }
 });
 </script>
