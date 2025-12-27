@@ -2,6 +2,7 @@ package com.drafty.controller;
 
 import org.springframework.web.bind.annotation.*;
 
+import com.drafty.entity.DraftAction;
 import com.drafty.entity.DraftSeries;
 import com.drafty.entity.GameDraft;
 import com.drafty.repository.DraftSeriesRepository;
@@ -44,6 +45,49 @@ public class DraftController {
         activeSessions.put(savedSeries.getId(), savedSeries);
 
         return savedSeries;
+    }
+
+@PostMapping("/{sessionId}/action")
+@Transactional
+public DraftSeries handleAction(@PathVariable String sessionId, @RequestBody DraftAction action) {
+    DraftSeries series = draftSeriesRepository.findById(sessionId)
+            .orElseThrow(() -> new RuntimeException("Session not found"));
+
+    if (series.getGames().isEmpty()) {
+        throw new IllegalStateException("No games found in this series");
+    }
+
+    GameDraft currentGame = series.getGames().get(series.getGames().size() - 1);
+
+    // Is it already picked/banned in CURRENT game?
+    if (isChampionAlreadySelected(currentGame, action.championId())) {
+        return series; 
+    }
+
+    // Is it a Fearless pick (already burned in PREVIOUS games)?
+    if (series.getBlueBurnedPicks().contains(action.championId()) || 
+        series.getRedBurnedPicks().contains(action.championId())) {
+        return series;
+    }
+
+    if ("BAN".equalsIgnoreCase(action.actionType())) {
+        if ("BLUE".equalsIgnoreCase(action.team())) currentGame.getBlueBans().add(action.championId());
+        else currentGame.getRedBans().add(action.championId());
+    } else if ("PICK".equalsIgnoreCase(action.actionType())) {
+        if ("BLUE".equalsIgnoreCase(action.team())) currentGame.getBluePicks().add(action.championId());
+        else currentGame.getRedPicks().add(action.championId());
+    }
+
+    DraftSeries saved = draftSeriesRepository.save(series);
+    activeSessions.put(sessionId, saved);
+    return saved;
+}
+
+    private boolean isChampionAlreadySelected(GameDraft game, String championId) {
+        return game.getBlueBans().contains(championId) ||
+                game.getRedBans().contains(championId) ||
+                game.getBluePicks().contains(championId) ||
+                game.getRedPicks().contains(championId);
     }
 
     @PostMapping("/{sessionId}/next-game")
