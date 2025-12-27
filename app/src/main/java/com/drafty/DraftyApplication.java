@@ -17,9 +17,8 @@ public class DraftyApplication {
     }
     @Bean
     public ObjectMapper objectMapper() {
-        // In Jackson 3 (Spring 4 default), we use the builder for thread-safety
         return JsonMapper.builder()
-                .findAndAddModules() // Automatically handles Java 8 times, etc.
+                .findAndAddModules() 
                 .build();
     }
     @Bean
