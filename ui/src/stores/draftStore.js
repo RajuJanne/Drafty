@@ -4,6 +4,12 @@ export const useDraftStore = defineStore("draft", {
   state: () => ({
     sessionId: null,
     series: null,
+    seriesLength: 3,
+    isSetupComplete: false,
+    teamNames: {
+      BLUE: "Blue Team",
+      RED: "Red Team",
+    },
     champions: [],
     loading: false,
     turnOrder: [
@@ -51,6 +57,11 @@ export const useDraftStore = defineStore("draft", {
       }
     },
 
+    async beginDraft() {
+      await this.startNewSeries(this.teamNames.BLUE, this.teamNames.RED)
+      this.isSetupComplete = true
+    },
+
     async startNewSeries(blueName, redName) {
       try {
         const response = await fetch(
@@ -67,6 +78,24 @@ export const useDraftStore = defineStore("draft", {
       }
     },
 
+    async advanceGame(winnerSide) {
+      if (!this.sessionId) return
+
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/draft/${this.sessionId}/next-game?winnerSide=${winnerSide}`,
+          {
+            method: "POST",
+          },
+        )
+        if (res.ok) {
+          this.series = await res.json()
+        }
+      } catch (e) {
+        console.error("Advance game error:", e)
+      }
+    },
+
     async resetSeries() {
       const bName = this.series?.teamBlueName || "Blue Team"
       const rName = this.series?.teamRedName || "Red Team"
@@ -74,73 +103,74 @@ export const useDraftStore = defineStore("draft", {
     },
 
     async selectChampion(championId) {
-      const turn = this.currentTurn
-      if (!turn || !this.sessionId) return
+      if (!this.sessionId || !this.currentTurn) return
 
-      const action = { championId, actionType: turn.type, team: turn.side }
+      const actionBody = {
+        championId: championId,
+        actionType: this.currentTurn.type, // "PICK" or "BAN"
+        team: this.currentTurn.side, // "BLUE" or "RED"
+      }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/draft/${this.sessionId}/action`, {
+        const response = await fetch(`http://localhost:8080/api/draft/${this.sessionId}/action`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(action),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(actionBody),
         })
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          console.error("Backend validation failed:", errorData)
-          return // Exit early so we don't overwrite state with an error
-        }
+        if (!response.ok) throw new Error("Action failed")
 
-        this.series = await res.json()
+        this.series = await response.json()
       } catch (error) {
-        console.error("Network or parsing error:", error)
+        console.error("Error submitting draft action:", error)
       }
     },
   },
   getters: {
-      currentTurn(state) {
-        if (!state.series || !state.series.games || state.series.games.length === 0) {
-          return null
-        }
+    currentTurn(state) {
+      if (!state.series || !state.series.games || state.series.games.length === 0) {
+        return null
+      }
 
-        const game = state.series.games[state.series.games.length - 1]
+      const game = state.series.games[state.series.games.length - 1]
 
-        const totalActions =
-          (game.blueBans?.length || 0) +
-          (game.redBans?.length || 0) +
-          (game.bluePicks?.length || 0) +
-          (game.redPicks?.length || 0)
+      const totalActions =
+        (game.blueBans?.length || 0) +
+        (game.redBans?.length || 0) +
+        (game.bluePicks?.length || 0) +
+        (game.redPicks?.length || 0)
 
-        return state.turnOrder[totalActions] || null
-      },
-
-      isFearlessDisabled: (state) => {
-        return (id) => {
-          if (!state.series) return false
-          const blueBurned = state.series.blueBurnedPicks || []
-          const redBurned = state.series.redBurnedPicks || []
-          return blueBurned.includes(id) || redBurned.includes(id)
-        }
-      },
-
-      getPhaseLabel(state) {
-        if (!state.series || !state.series.games || state.series.games.length === 0) {
-          return "Draft Not Started"
-        }
-
-        const game = state.series.games[state.series.games.length - 1]
-        const total =
-          (game.blueBans?.length || 0) +
-          (game.redBans?.length || 0) +
-          (game.bluePicks?.length || 0) +
-          (game.redPicks?.length || 0)
-
-        if (total < 6) return `Phase 1: Ban ${total + 1}/6`
-        if (total < 12) return `Phase 1: Pick ${total - 5}/6`
-        if (total < 16) return `Phase 2: Ban ${total - 11}/4`
-        if (total < 20) return `Phase 2: Pick ${total - 15}/4`
-        return "Draft Complete"
-      },
+      return state.turnOrder[totalActions] || null
     },
+
+    isFearlessDisabled: (state) => {
+      return (id) => {
+        if (!state.series) return false
+        const blueBurned = state.series.blueBurnedPicks || []
+        const redBurned = state.series.redBurnedPicks || []
+        return blueBurned.includes(id) || redBurned.includes(id)
+      }
+    },
+
+    getPhaseLabel(state) {
+      if (!state.series || !state.series.games || state.series.games.length === 0) {
+        return "Draft Not Started"
+      }
+
+      const game = state.series.games[state.series.games.length - 1]
+      const total =
+        (game.blueBans?.length || 0) +
+        (game.redBans?.length || 0) +
+        (game.bluePicks?.length || 0) +
+        (game.redPicks?.length || 0)
+
+      if (total < 6) return `Phase 1: Ban ${total + 1}/6`
+      if (total < 12) return `Phase 1: Pick ${total - 5}/6`
+      if (total < 16) return `Phase 2: Ban ${total - 11}/4`
+      if (total < 20) return `Phase 2: Pick ${total - 15}/4`
+      return "Draft Complete"
+    },
+  },
 })
