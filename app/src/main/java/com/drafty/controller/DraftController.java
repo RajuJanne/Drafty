@@ -29,7 +29,7 @@ public class DraftController {
             @RequestParam String redName,
             @RequestParam(defaultValue = "3") Integer seriesLength) {
 
-        String sessionId = UUID.randomUUID().toString().substring(0, 8);
+        String sessionId = UUID.randomUUID().toString();
 
         DraftSeries series = new DraftSeries();
         series.setId(sessionId);
