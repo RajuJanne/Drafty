@@ -11,7 +11,7 @@
       </div>
     </header>
 
-    <main class="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
+    <main class="grid grid-cols-12 gap-4 max-w-7xl mx-auto pb-24">
       <section class="col-span-2 space-y-4 p-2 rounded-lg transition-all duration-500">
         <h2 class="text-blue-400 font-bold border-b border-blue-900 pb-1 text-sm uppercase">
           Blue Side
@@ -146,79 +146,75 @@
       </section>
     </main>
 
-    <footer class="mt-8 max-w-7xl mx-auto border-t border-slate-900 pt-4">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">
-            Fearless Blocked
-          </h3>
-          <p class="text-[10px] text-slate-600">Champions used in previous games are removed</p>
+    <footer 
+      class="fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out bg-slate-950 border-t border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]"
+      :class="isGraveyardOpen ? 'h-[40vh]' : 'h-16'"
+    >
+      <div class="h-16 flex items-center justify-between px-8 bg-slate-900/50 border-b border-slate-800/50">
+        <div class="flex items-center gap-4">
+          <button 
+            @click="toggleGraveyard"
+            class="flex items-center gap-2 text-xs font-black tracking-widest text-slate-400 hover:text-white transition-colors"
+          >
+            <span :class="isGraveyardOpen ? 'rotate-180' : ''" class="transition-transform duration-300">▲</span>
+            CHAMPION GRAVEYARD
+          </button>
         </div>
+
         <div class="flex gap-4">
           <button
             v-if="isGameComplete"
             @click="advanceToNextGame"
-            class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded text-xs font-bold transition-all shadow-lg shadow-blue-900/20"
+            class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded text-[10px] font-black tracking-tighter transition-all"
           >
             ADVANCE TO NEXT GAME
           </button>
           <button
             @click="store.resetSeries"
-            class="px-4 py-2 bg-slate-800 hover:bg-red-900/50 rounded text-xs font-bold transition-colors border border-slate-700"
+            class="px-4 py-2 bg-slate-800 hover:bg-red-900/50 rounded text-[10px] font-black tracking-tighter transition-colors border border-slate-700"
           >
             RESET SERIES
           </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-16">
-        <div class="space-y-6">
-          <h3
-            class="text-blue-500 font-black text-xs uppercase tracking-[0.2em] border-l-2 border-blue-500 pl-3"
-          >
-            Blue Team Burned
-          </h3>
-          <div
-            v-for="(gamePicks, index) in blueBurnedByGame"
-            :key="'blue-g' + index"
-            class="bg-slate-900/30 p-3 rounded-lg border border-slate-800/50"
-          >
-            <p class="text-[10px] text-slate-500 font-bold mb-2 uppercase">Game {{ index + 1 }}</p>
-            <div class="flex gap-2">
-              <div
-                v-for="id in gamePicks"
-                :key="id"
-                class="w-12 h-12 grayscale opacity-40 border border-blue-900/30 rounded overflow-hidden"
-              >
-                <img :src="getImg(id)" class="w-full h-full object-cover" />
+      <div v-if="isGraveyardOpen" class="p-6 h-[calc(40vh-64px)] overflow-y-auto custom-scrollbar">
+        <div class="grid grid-cols-2 gap-12 max-w-7xl mx-auto">
+          
+          <div class="space-y-6">
+            <h3 class="text-blue-500 font-black text-[10px] uppercase tracking-[0.2em] border-l-2 border-blue-500 pl-3">
+              Blue Team Burned
+            </h3>
+            <div v-for="(gamePicks, idx) in blueBurnedByGame" :key="'bg'+idx" class="bg-slate-900/20 p-4 rounded border border-slate-800/50">
+              <p class="text-[9px] text-slate-500 font-bold mb-3">GAME {{ idx + 1 }}</p>
+              <div class="flex flex-wrap gap-4">
+                <div v-for="id in gamePicks" :key="id" class="text-center group">
+                  <div class="w-14 h-14 grayscale opacity-60 border border-blue-900/30 rounded overflow-hidden mb-1">
+                    <img :src="getImg(id)" class="w-full h-full object-cover" />
+                  </div>
+                  <p class="text-[9px] text-slate-400 font-medium truncate w-14">{{ getChampName(id) }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="space-y-6">
-          <h3
-            class="text-red-500 font-black text-xs uppercase tracking-[0.2em] border-r-2 border-red-500 pr-3 text-right"
-          >
-            Red Team Burned
-          </h3>
-          <div
-            v-for="(gamePicks, index) in redBurnedByGame"
-            :key="'red-g' + index"
-            class="bg-slate-900/30 p-3 rounded-lg border border-slate-800/50"
-          >
-            <p class="text-[10px] text-slate-500 font-bold mb-2 uppercase text-right">
-              Game {{ index + 1 }}
-            </p>
-            <div class="flex gap-2 justify-end">
-              <div
-                v-for="id in gamePicks"
-                :key="id"
-                class="w-12 h-12 grayscale opacity-40 border border-red-900/30 rounded overflow-hidden"
-              >
-                <img :src="getImg(id)" class="w-full h-full object-cover" />
+
+          <div class="space-y-6">
+            <h3 class="text-red-500 font-black text-[10px] uppercase tracking-[0.2em] border-r-2 border-red-500 pr-3 text-right">
+              Red Team Burned
+            </h3>
+            <div v-for="(gamePicks, idx) in redBurnedByGame" :key="'rg'+idx" class="bg-slate-900/20 p-4 rounded border border-slate-800/50">
+              <p class="text-[9px] text-slate-500 font-bold mb-3 text-right">GAME {{ idx + 1 }}</p>
+              <div class="flex flex-wrap gap-4 justify-end">
+                <div v-for="id in gamePicks" :key="id" class="text-center group">
+                  <div class="w-14 h-14 grayscale opacity-60 border border-red-900/30 rounded overflow-hidden mb-1">
+                    <img :src="getImg(id)" class="w-full h-full object-cover" />
+                  </div>
+                  <p class="text-[9px] text-slate-400 font-medium truncate w-14">{{ getChampName(id) }}</p>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </footer>
@@ -231,22 +227,25 @@ import { useDraftStore } from "./stores/draftStore"
 
 const store = useDraftStore()
 const search = ref("")
-
+const isGraveyardOpen = ref(false);
 const loading = ref(true)
 
+const toggleGraveyard = () => {
+  isGraveyardOpen.value = !isGraveyardOpen.value;
+};
+
 const filteredChamps = computed(() => {
-  if (!store.champions) return [];
+  if (!store.champions) return []
 
   return store.champions.filter((c) => {
-    const isDisabled = typeof store.isFearlessDisabled === 'function' 
-      ? store.isFearlessDisabled(c.id) 
-      : false;
+    const isDisabled =
+      typeof store.isFearlessDisabled === "function" ? store.isFearlessDisabled(c.id) : false
 
-    if (isDisabled) return false;
+    if (isDisabled) return false
 
-    return c.name.toLowerCase().includes(search.value.toLowerCase());
-  });
-});
+    return c.name.toLowerCase().includes(search.value.toLowerCase())
+  })
+})
 
 const isBannedInCurrentGame = (championId) => {
   if (!store.series) return false
@@ -301,6 +300,11 @@ const getPicks = (team) => {
   return team === "BLUE" ? current.bluePicks : current.redPicks
 }
 
+const getChampName = (id) => {
+  const champ = store.champions.find(c => c.id === id);
+  return champ ? champ.name : id;
+};
+
 const getImg = (input) => {
   if (!input) return ""
   const filename = input.endsWith(".png") ? input : `${input}.png`
@@ -314,14 +318,7 @@ const isGameComplete = computed(() => {
 })
 
 const advanceToNextGame = async () => {
-  try {
-    const res = await fetch(`http://localhost:8080/api/draft/${store.sessionId}/next-game`, {
-      method: "POST",
-    })
-    store.series = await res.json()
-  } catch (e) {
-    console.error("Failed to advance game", e)
-  }
+  await store.advanceGame()
 }
 
 const chunkArray = (array, size) => {
