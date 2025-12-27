@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom tweak for League icons */
+img {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}

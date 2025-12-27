@@ -1,0 +1,38 @@
+@Service
+public class DraftManagerService {
+
+    public String getCurrentPhase(GameDraft game) {
+      int totalActions = game.getBlueBans().size() + game.getRedBans().size() + 
+                        game.getBluePicks().size() + game.getRedPicks().size();
+      
+      if (totalActions < 6) return "BAN";
+      if (totalActions < 12) return "PICK";
+      if (totalActions < 16) return "PHASE_2_BANS";
+      if (totalActions < 20) return "PHASE_2_PICKS";
+      return "COMPLETE";
+    }
+    
+    public boolean isAvailable(DraftSeries series, String championId) {
+        // 1. Check if it was picked in previous games (Fearless Rule)
+        if (series.getGlobalPickedPool().contains(championId)) {
+            return false;
+        }
+        
+        // 2. Check if it is banned in the CURRENT game
+        GameDraft current = series.getGames().get(series.getGames().size() - 1);
+        if (current.getBlueBans().contains(championId) || current.getRedBans().contains(championId)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    public void recordPick(DraftSeries series, String championId, boolean isBlueSide) {
+        GameDraft current = series.getGames().get(series.getGames().size() - 1);
+        if (isBlueSide) current.getBluePicks().add(championId);
+        else current.getRedPicks().add(championId);
+        
+        // Add to the fearless pool for the NEXT game
+        series.getGlobalPickedPool().add(championId);
+    }
+}
