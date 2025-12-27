@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import com.drafty.entity.DraftSeries;
 
 @Repository
-public interface DraftSeriesRepository extends JpaRepository<DraftSeries, Long> {
+public interface DraftSeriesRepository extends JpaRepository<DraftSeries, String> {
 }

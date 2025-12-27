@@ -8,11 +8,14 @@ import java.util.*;
 @Data
 public class DraftSeries {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String teamBlueName;
     private String teamRedName;
+
+    private Integer seriesLength; // 1, 3, or 5
+    private Integer blueScore = 0;
+    private Integer redScore = 0;
 
     @ElementCollection
     private List<String> blueBurnedPicks = new ArrayList<>();
